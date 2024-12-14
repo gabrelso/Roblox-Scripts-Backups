@@ -676,5 +676,3 @@ end
 
 getgenv().FurryHBELoaded = true
 updatePlayers()
-Library:Notify("hai :3")
-Library:Notify("Press " .. Library.ToggleKeybind.Value .. " to open the menu")
