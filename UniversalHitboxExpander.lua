@@ -12,15 +12,17 @@ end
 if not getgenv().MTAPIMutex then
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/RectangularObject/MT-Api-v2/main/__source/mt-api%20v2.lua", true))()
 end
---[[ loadstring(game:HttpGet("https://raw.githubusercontent.com/LegoHacker1337/legohacks/main/PhysicsServiceOnClient.lua"))() ]]
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/RectangularObject/LinoriaLib/main/Library.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/RectangularObject/LinoriaLib/main/addons/SaveManager.lua"))()
+
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/gabrelso/LinoriaLib/refs/heads/main/Library.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/gabrelso/LinoriaLib/refs/heads/main/addons/SaveManager.lua"))()
+local ThemeManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/gabrelso/LinoriaLib/refs/heads/main/addons/ThemeManager.lua"))()
+
 SaveManager:SetLibrary(Library)
+ThemeManager:SetLibrary(Library)
 SaveManager:SetFolder("FurryHBE")
 
 local Teams = game:GetService("Teams")
 local Players = game:GetService("Players")
---[[ local PhysicsService = game:GetService("PhysicsService") ]]
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -30,11 +32,6 @@ local lPlayer = Players.LocalPlayer
 local players = {}
 local entities = {}
 local teamModule = nil
-
---[[ PhysicsService:CreateCollisionGroup("furryCollisions")
-for _, v in pairs(PhysicsService:GetCollisionGroups()) do
-	PhysicsService:CollisionGroupSetCollidable(PhysicsService:GetCollisionGroupName(v.id), "furryCollisions", false)
-end ]]
 
 local function updatePlayers()
 	if not getgenv().FurryHBELoaded then return end
@@ -104,6 +101,7 @@ collisionsGroupbox:AddToggle("collisionsToggled", { Text = "Enable Collisions" }
 
 SaveManager:BuildConfigSection(mainTab)
 SaveManager:LoadAutoloadConfig()
+ThemeManager:ApplyToGroupbox(miscGroupbox) 
 
 local function updateList(list)
 	list:SetValues()
@@ -641,7 +639,6 @@ lPlayer.CharacterAdded:Connect(function()
 	updatePlayers()
 end)
 
--- This is a very very very very very very rare bug that I encountered, so here's a button that fixes it
 emergencyGroupbox:AddButton("Fix Missing Players", function()
 	local found = 0
 	for _, player in ipairs(Players:GetPlayers()) do
@@ -658,21 +655,5 @@ emergencyGroupbox:AddButton("Fix Missing Players", function()
 	updatePlayers()
 end):AddTooltip("Attempts to find players that were not detected by the hbe (somehow)")
 
-if game.PlaceId == 111311599 then
-	-- Critical Strike Anticheat Disabler
-	local anticheat = game:GetService("ReplicatedFirst")["Serverbased AntiCheat"]
-	local sValue = lPlayer:WaitForChild("SValue")
-	local function constructAnticheatString()
-		return "CS-" .. math.random(11111, 99999) .. "-" .. math.random(1111, 9999) .. "-" .. math.random(111111, 999999) .. math.random(1111111, 9999999) .. (sValue.Value * 6) ^ 2 + 18
-	end
-	task.spawn(function()
-		while true do
-			task.wait(2)
-			game:GetService("ReplicatedStorage").ACDetect:FireServer(sValue.Value, constructAnticheatString())
-		end
-	end)
-	anticheat.Disabled = true
-end
-
 getgenv().FurryHBELoaded = true
-updatePlayers()
+updatePlayers() 
