@@ -657,3 +657,33 @@ end):AddTooltip("Attempts to find players that were not detected by the hbe (som
 
 getgenv().FurryHBELoaded = true
 updatePlayers() 
+
+local function autoRun()
+    while task.wait(0.3) do
+        local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid and humanoid.WalkSpeed == 16 then
+            humanoid.WalkSpeed = 24
+        end
+    end
+end
+
+local function antiAfk()
+    local mt = getrawmetatable(game)
+    setreadonly(mt, false)
+    local oldNamecall = mt.__namecall
+    mt.__namecall = function(self, ...)
+        local method = getnamecallmethod()
+        if tostring(self) == "AFK" and method == "FireServer" then
+            return
+        end
+        return oldNamecall(self, ...)
+    end
+    setreadonly(mt, true)
+end
+
+if game.PlaceId == 13132367906 then
+    autoRun()
+    antiAfk()
+else
+    print("nué o EB")
+end
