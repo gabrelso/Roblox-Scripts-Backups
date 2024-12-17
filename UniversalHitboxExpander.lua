@@ -21,6 +21,8 @@ SaveManager:SetLibrary(Library)
 ThemeManager:SetLibrary(Library)
 SaveManager:SetFolder("FurryHBE")
 
+getgenv().AutoRun = false
+
 local Teams = game:GetService("Teams")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -32,6 +34,15 @@ local lPlayer = Players.LocalPlayer
 local players = {}
 local entities = {}
 local teamModule = nil
+
+local function autoRun()
+    while Toggles.autoRunToggle.Value == true do task.wait(0.3)
+        local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+        if humanoid and humanoid.WalkSpeed == 16 then
+            humanoid.WalkSpeed = 24
+        end
+    end
+end
 
 local function updatePlayers()
 	if not getgenv().FurryHBELoaded then return end
@@ -57,11 +68,17 @@ local mainTab = mainWindow:AddTab("Main")
 local mainGroupbox = mainTab:AddLeftGroupbox("Hitbox Extender")
 local espGroupbox = mainTab:AddLeftGroupbox("ESP")
 local ignoresGroupbox = mainTab:AddRightGroupbox("Ignores")
-local collisionsGroupbox = mainTab:AddRightGroupbox("Collisions")
-local miscGroupbox = mainTab:AddLeftGroupbox("Keybinds")
+local collisionsGroupbox = mainTab:AddRightGroupbox("Collisions // Keybinds")
+
+local miscTab = mainWindow:AddTab("Misc")
+local gameGroupbox = miscTab:AddLeftGroupbox("Game")
 
 local emergencyTab = mainWindow:AddTab("Emergency")
 local emergencyGroupbox = emergencyTab:AddLeftGroupbox("Fixes")
+local settingsTab = mainWindow:AddTab("Settings")
+
+ThemeManager:ApplyToTab(settingsTab) 
+SaveManager:BuildConfigSection(settingsTab)
 
 mainGroupbox:AddToggle("extenderToggled", { Text = "Toggle" }):OnChanged(updatePlayers)
 mainGroupbox:AddSlider("extenderSize", { Text = "Size", Min = 2, Max = 100, Default = 10, Rounding = 1 }):OnChanged(updatePlayers)
@@ -69,12 +86,6 @@ mainGroupbox:AddSlider("extenderTransparency", { Text = "Transparency", Min = 0,
 mainGroupbox:AddInput("customPartName", { Text = "Custom Part Name", Default = "HeadHB" }):OnChanged(updatePlayers)
 mainGroupbox:AddDropdown("extenderPartList", { Text = "Body Parts", AllowNull = true, Multi = true, Values = { "Custom Part", "Head", "HumanoidRootPart", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg" }, Default = "HumanoidRootPart" }):OnChanged(updatePlayers)
 
-espGroupbox:AddToggle("espNameToggled", { Text = "Name" }):AddColorPicker("espNameColor1", { Title = "Fill Color", Default = Color3.fromRGB(255, 255, 255) }):AddColorPicker("espNameColor2", { Title = "Outline Color", Default = Color3.fromRGB(0, 0, 0) })
-Toggles.espNameToggled:OnChanged(updatePlayers)
-Options.espNameColor1:OnChanged(updatePlayers)
-Options.espNameColor2:OnChanged(updatePlayers)
-espGroupbox:AddToggle("espNameUseTeamColor", { Text = "Use Team Color For Name" }):OnChanged(updatePlayers)
-espGroupbox:AddDropdown("espNameType", { Text = "Name Type", AllowNull = false, Multi = false, Values = { "Display Name", "Account Name" }, Default = "Display Name" }):OnChanged(updatePlayers)
 espGroupbox:AddToggle("espHighlightToggled", { Text = "Chams" }):AddColorPicker("espHighlightColor1", { Title = "Fill Color", Default = Color3.fromRGB(0, 0, 0) }):AddColorPicker("espHighlightColor2", { Title = "Outline Color", Default = Color3.fromRGB(0, 0, 0) })
 Toggles.espHighlightToggled:OnChanged(updatePlayers)
 Options.espHighlightColor1:OnChanged(updatePlayers)
@@ -84,8 +95,8 @@ espGroupbox:AddDropdown("espHighlightDepthMode", { Text = "Chams Depth Mode", Al
 espGroupbox:AddSlider("espHighlightFillTransparency", { Text = "Chams Fill Transparency", Min = 0, Max = 1, Default = 0.5, Rounding = 2 }):OnChanged(updatePlayers)
 espGroupbox:AddSlider("espHighlightOutlineTransparency", { Text = "Chams Outline Transparency", Min = 0, Max = 1, Default = 0, Rounding = 2 }):OnChanged(updatePlayers)
 
-miscGroupbox:AddLabel("Toggle UI"):AddKeyPicker("menuKeybind", { Default = "End", NoUI = true, Text = "Menu Keybind" })
-miscGroupbox:AddLabel("Force Update"):AddKeyPicker("forceUpdateKeybind", { Default = "Home", NoUI = true, Text = "Force Update Keybind"})
+collisionsGroupbox:AddLabel("Toggle UI"):AddKeyPicker("menuKeybind", { Default = "End", NoUI = true, Text = "Menu Keybind" })
+collisionsGroupbox:AddLabel("Force Update"):AddKeyPicker("forceUpdateKeybind", { Default = "Home", NoUI = true, Text = "Force Update Keybind"})
 Options.forceUpdateKeybind:OnClick(updatePlayers)
 Library.ToggleKeybind = Options.menuKeybind
 
@@ -99,9 +110,12 @@ ignoresGroupbox:AddDropdown("ignoreTeamList", { Text = "Teams", AllowNull = true
 
 collisionsGroupbox:AddToggle("collisionsToggled", { Text = "Enable Collisions" }):OnChanged(updatePlayers)
 
-SaveManager:BuildConfigSection(mainTab)
+
+gameGroupbox:AddLabel("Anti AFK is always enabled")
+
+gameGroupbox:AddToggle("autoRunToggle", { Text = "Auto Run" }):OnChanged(autoRun)
+
 SaveManager:LoadAutoloadConfig()
-ThemeManager:ApplyToGroupbox(miscGroupbox) 
 
 local function updateList(list)
 	list:SetValues()
@@ -393,61 +407,44 @@ local function addPlayer(player)
 
 	-- esp
 
-	local function FindFirstChildMatching(parent, name)
+local function FindFirstChildMatching(parent, name)
 		if not parent then return nil end
-		for _,v in pairs(parent:GetChildren()) do
+		for _, v in pairs(parent:GetChildren()) do
 			if string.match(v.Name, name) then
 				return v
 			end
 		end
 	end
 
-	local nameEsp = Drawing.new("Text"); nameEsp.Center = true; nameEsp.Outline = true
-	local chams = Instance.new("Highlight");chams.Parent = game:GetService("CoreGui")
+	local chams = Instance.new("Highlight")
+	chams.Parent = game:GetService("CoreGui")
+
 	function playerIdx:UpdateESP()
-		if not playerChar or isIgnored() or isDead() then nameEsp.Visible = false; chams.Enabled = false return end
-		if Toggles.espNameToggled.Value then
-			local target = FindFirstChildMatching(playerChar, "Torso")
-			if target then
-				local pos, vis = WorldToViewportPoint(Camera, target.Position)
-				if vis then
-					if Options.espNameType.Value == "Display Name" then
-						nameEsp.Text = player.DisplayName
-					else
-						nameEsp.Text = player.Name
-					end
-					if Toggles.espNameUseTeamColor.Value then
-						nameEsp.Color = player.TeamColor.Color
-					else
-						nameEsp.Color = Options.espNameColor1.Value
-					end
-					nameEsp.OutlineColor = Options.espNameColor2.Value
-					nameEsp.Position = Vector2.new(pos.X, pos.Y)
-					nameEsp.Size = 1000 / pos.Z + 10
-					nameEsp.Visible = true
-				else
-					nameEsp.Visible = false
-				end
-			else
-				nameEsp.Visible = false
-			end
-		else
-			nameEsp.Visible = false
+		if not playerChar or isIgnored() or isDead() then 
+			chams.Enabled = false 
+			return 
 		end
-		if Toggles.espHighlightToggled.Value then
-			chams.Adornee = playerChar
-			if Toggles.espHighlightToggled.Value then
-				if Toggles.espHighlightUseTeamColor.Value then
-					chams.FillColor = player.TeamColor.Color
-					chams.OutlineColor = player.TeamColor.Color
+
+		local target = FindFirstChildMatching(playerChar, "Torso")
+		if target then
+			local _, vis = WorldToViewportPoint(Camera, target.Position)
+			if vis then
+				if Toggles.espHighlightToggled.Value then
+					chams.Adornee = playerChar
+					if Toggles.espHighlightUseTeamColor.Value then
+						chams.FillColor = player.TeamColor.Color
+						chams.OutlineColor = player.TeamColor.Color
+					else
+						chams.FillColor = Options.espHighlightColor1.Value
+						chams.OutlineColor = Options.espHighlightColor2.Value
+					end
+					chams.DepthMode = Enum.HighlightDepthMode[Options.espHighlightDepthMode.Value]
+					chams.FillTransparency = Options.espHighlightFillTransparency.Value
+					chams.OutlineTransparency = Options.espHighlightOutlineTransparency.Value
+					chams.Enabled = true
 				else
-					chams.FillColor = Options.espHighlightColor1.Value
-					chams.OutlineColor = Options.espHighlightColor2.Value
+					chams.Enabled = false
 				end
-				chams.DepthMode = Enum.HighlightDepthMode[Options.espHighlightDepthMode.Value]
-				chams.FillTransparency = Options.espHighlightFillTransparency.Value
-				chams.OutlineTransparency = Options.espHighlightOutlineTransparency.Value
-				chams.Enabled = true
 			else
 				chams.Enabled = false
 			end
@@ -457,9 +454,9 @@ local function addPlayer(player)
 	end
 
 	function playerIdx:DeleteVisuals()
-		nameEsp:Remove()
 		chams:Destroy()
 	end
+
 
 	-- jank fix for CharacterAdded firing too early
 	local function WaitForFullChar(char)
@@ -656,16 +653,7 @@ emergencyGroupbox:AddButton("Fix Missing Players", function()
 end):AddTooltip("Attempts to find players that were not detected by the hbe (somehow)")
 
 getgenv().FurryHBELoaded = true
-updatePlayers() 
-
-local function autoRun()
-    while task.wait(0.3) do
-        local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
-        if humanoid and humanoid.WalkSpeed == 16 then
-            humanoid.WalkSpeed = 24
-        end
-    end
-end
+updatePlayers()
 
 local function antiAfk()
     local mt = getrawmetatable(game)
@@ -682,8 +670,7 @@ local function antiAfk()
 end
 
 if game.PlaceId == 13132367906 then
-    autoRun()
-    antiAfk()
-else
+  antiAfk()
+  else
     print("nué o EB")
 end
