@@ -49,6 +49,7 @@ local function updatePlayers()
 	for _, v in pairs(players) do
 		task.spawn(function()
 			v:Update()
+			task.wait(0.5)
 		end)
 	end
 end
@@ -59,6 +60,7 @@ RunService:BindToRenderStep("furryWalls", Enum.RenderPriority.Camera.Value - 1, 
 	for _, v in pairs(players) do
 		task.spawn(function()
 			v:UpdateESP()
+			task.wait(0.5)
 		end)
 	end
 end)
@@ -127,10 +129,6 @@ if game.GameId == 504234221 then -- Vampire Hunters 3
 end
 if game.GameId == 1934496708 then -- Project: SCP
 	teamModule = require(Workspace:WaitForChild("Teams"))
-end
-
-local function addEntity(entity)
-	
 end
 
 local function addPlayer(player)
@@ -400,6 +398,7 @@ local function addPlayer(player)
 		for _, v in pairs(playerChar:GetChildren()) do
 			if v:IsA("BasePart") then
 				resize(v)
+				task.wait(0.5)
 			end
 		end
 		debounce = false
