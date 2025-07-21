@@ -428,11 +428,9 @@ function Aiming.GetClosestPlayerToCursor()
     Aiming.SelectedPart = TargetPart
 end
 
--- Update FOV 
-Aiming.UpdateFOV()
-
 -- // Heartbeat Function
 Heartbeat:Connect(function()
+    Aiming.UpdateFOV()
     Aiming.GetClosestPlayerToCursor()
 end)
 
