@@ -52,16 +52,11 @@ circle.Filled = false
 Aiming.FOVCircle = circle
 
 -- // Atualizar o círculo
-function Aiming.UpdateFOV()
-    if not circle then return end
-
-    circle.Visible = Aiming.ShowFOV
-    circle.Radius = (Aiming.FOV * 3)
-    circle.Position = Vector2new(CurrentCamera.ViewportSize.X / 2, CurrentCamera.ViewportSize.Y / 2)
-    circle.NumSides = Aiming.FOVSides
-    circle.Color = Aiming.FOVColour
-    return circle
-end
+circle.Visible = Aiming.ShowFOV
+circle.Radius = (Aiming.FOV * 3)
+circle.Position = Vector2new(CurrentCamera.ViewportSize.X / 2, CurrentCamera.ViewportSize.Y / 2)
+circle.NumSides = Aiming.FOVSides
+circle.Color = Aiming.FOVColour
 
 -- // Função para obter a parte mais próxima dentro do FOV
 function Aiming.GetClosestTargetPartInFOV(Character)
@@ -117,7 +112,6 @@ end
 
 -- // Atualizar FOV e encontrar jogador mais próximo no Heartbeat
 Heartbeat:Connect(function()
-    Aiming.UpdateFOV()
     Aiming.GetClosestPlayerInFOV()
 end)
 
