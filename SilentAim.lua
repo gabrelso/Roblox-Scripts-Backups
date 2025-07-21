@@ -2,13 +2,12 @@ if getgenv().Aiming then return getgenv().Aiming end
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local GuiService = game:GetService("GuiService")
 local RunService = game:GetService("RunService")
+local GuiService = game:GetService("GuiService")
 
 local Heartbeat = RunService.Heartbeat
 local LocalPlayer = Players.LocalPlayer
 local CurrentCamera = Workspace.CurrentCamera
-local Mouse = LocalPlayer:GetMouse()
 
 local Drawingnew = Drawing.new
 local Color3fromRGB = Color3.fromRGB
@@ -56,7 +55,7 @@ function Aiming.GetClosestTargetPartInFOV(Character)
         end
         if not TargetPart then return end
 
-        local PartPos, OnScreen = WorldToViewportPoint(CurrentCamera, TargetPart.Position)
+        local PartPos, _ = WorldToViewportPoint(CurrentCamera, TargetPart.Position)
         local Magnitude = (Vector2new(PartPos.X, PartPos.Y) - Vector2new(CurrentCamera.ViewportSize.X / 2, CurrentCamera.ViewportSize.Y / 2)).Magnitude
 
         if Magnitude < ShortestDistance and Magnitude <= circle.Radius then
@@ -76,30 +75,38 @@ function Aiming.GetClosestTargetPartInFOV(Character)
     return ClosestPart, ClosestPartPosition
 end
 
+function Aiming.IsIgnoredTeam(Player)
+    for _, v in ipairs(Aiming.Ignored.Teams) do
+        if v.Team == Player.Team and v.TeamColor == Player.TeamColor then
+            return true
+        end
+    end
+    return false
+end
+
+function Aiming.IsIgnoredPlayer(Player)
+    for _, p in ipairs(Aiming.Ignored.Players) do
+        if p == Player or (typeof(p) == "number" and p == Player.UserId) then
+            return true
+        end
+    end
+    return false
+end
+
 function Aiming.GetClosestPlayerInFOV()
     local ClosestPlayer, ClosestTargetPart, ShortestDistance = nil, nil, 1/0
 
     for _, Player in ipairs(Players:GetPlayers()) do
-        local ignored = false
-        for _, p in ipairs(Aiming.Ignored.Players) do
-            if p == Player or (typeof(p) == "number" and p == Player.UserId) then
-                ignored = true
-                break
-            end
-        end
-        if Player == LocalPlayer or ignored then continue end
+        if Player == LocalPlayer or Aiming.IsIgnoredPlayer(Player) or Aiming.IsIgnoredTeam(Player) then continue end
 
         local Character = Player.Character
         if Character then
             local TargetPart, _ = Aiming.GetClosestTargetPartInFOV(Character)
-
             if TargetPart then
-                local chance = mathrandom()
-                if chance > (Aiming.HitChance / 100) then
+                if mathrandom() > (Aiming.HitChance / 100) then
                     Aiming.Selected, Aiming.SelectedPart = nil, nil
                     return
                 end
-
                 ClosestPlayer, ClosestTargetPart = Player, TargetPart
                 break
             end
@@ -123,5 +130,21 @@ function Aiming.Check()
 end
 
 Aiming.CheckSilentAim = Aiming.Check
+
+function Aiming.TeamCheck(toggle)
+    if toggle then
+        tableinsert(Aiming.Ignored.Teams, {
+            Team = LocalPlayer.Team,
+            TeamColor = LocalPlayer.TeamColor
+        })
+    else
+        for i, v in ipairs(Aiming.Ignored.Teams) do
+            if v.Team == LocalPlayer.Team and v.TeamColor == LocalPlayer.TeamColor then
+                tableremove(Aiming.Ignored.Teams, i)
+                break
+            end
+        end
+    end
+end
 
 return Aiming
