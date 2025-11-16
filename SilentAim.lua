@@ -332,8 +332,8 @@ function Aiming.GetClosestTargetPartToCursor(Character)
         -- // Get the length between Mouse and Target Part (on screen)
         local PartPos, onScreen = WorldToViewportPoint(CurrentCamera, TargetPart.Position)
         local GuiInset = GetGuiInset(GuiService)
-        local Magnitude = (Vector2new(PartPos.X, PartPos.Y - GuiInset.Y) - Vector2new(Mouse.X, Mouse.Y)).Magnitude
-
+        local ScreenCenter = Vector2new(CurrentCamera.ViewportSize.X / 2, CurrentCamera.ViewportSize.Y / 2)
+        local Magnitude = (Vector2new(PartPos.X, PartPos.Y) - ScreenCenter).Magnitude
         -- //
         if (Magnitude < ShortestDistance) then
             ClosestPart = TargetPart
